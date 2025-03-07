@@ -1,8 +1,6 @@
 # Lingua — Твой Discord помощник
 
-<div style="float: right; width: 200px;">
-  <img src="lingua.png" alt="Логотип" width="200"/>
-</div>
+<img src="lingua.png" alt="Логотип" style="float: right; width: 200px;"/>
 
 Централизация чаще всего зло, поэтому теперь этот бот — полностью open-source.
 
