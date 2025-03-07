@@ -1,0 +1,3 @@
+disnake
+openai
+python-dotenv
