@@ -1,6 +1,6 @@
-# Lingua — Твой Discord помощник
+<img src="lingua.png" alt="Логотип" align="right" width="200"/>
 
-<img src="lingua.png" alt="Логотип" style="float: right; width: 200px;"/>
+# Lingua — Твой Discord помощник
 
 Централизация чаще всего зло, поэтому теперь этот бот — полностью open-source.
 
