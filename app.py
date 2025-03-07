@@ -55,7 +55,7 @@ class Lingua(cmds.Bot):
 
         completion = self.client.chat.completions.create(
             extra_headers={
-                "HTTP-Referer": "https://qwa.su/lingua",
+                "HTTP-Referer": "https://lingua.qwa.su/",
                 "X-Title": "Lingua AI"
             },
             model=MODEL,
@@ -89,7 +89,7 @@ class GeneralCommands(cmds.Cog):
             description="Lingua — это помощник, который помогает вам с различными задачами, предоставляя полезную информацию и выполняя команды. Он всегда готов ответить на ваши вопросы и сделать общение персонализированным и приятным.\n\n"
             color=0x0065bc
         )
-        embed.set_thumbnail(url="https://qwa.su/lingua/lingua.png")
+        embed.set_thumbnail(url="https://raw.githubusercontent.com/atarwn/lingua/refs/heads/main/lingua.png")
         embed.set_footer(text="Lingua v0.7.1 © Qwaderton Labs, 2024-2025")
         await inter.response.send_message(embed=embed)
 
