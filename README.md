@@ -38,9 +38,9 @@
 
 4. **Заполните файл `.env`**
    ```ini
-   BOT = MTqVsuPerSeCREtbOtToken
-   OAI = sk-supersecretopenaitoken
-   API = https://openrouter.ai/api/v1
+   BOT_TOKEN = MTqVsuPerSeCREtbOtToken
+   OPENAI_KEY = sk-supersecretopenaitoken
+   API_URL = https://openrouter.ai/api/v1
    ```
 
    > *Примечание:* Ключи здесь невалидные, замените их на свои.
