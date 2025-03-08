@@ -38,13 +38,38 @@ class Lingua(cmds.Bot):
         print(f"🔗 Подключён к {len(self.guilds)} серверам")
         await self._sync_application_commands()  # Принудительная синхронизация слеш-команд
 
+    def split_message(self, text: str, max_length: int = 2000) -> list[str]:
+        chunks = []
+        while len(text) > 0:
+            if len(text) <= max_length:
+                chunks.append(text)
+                break
+            split_at = text.rfind(' ', 0, max_length)
+            if split_at == -1:
+                # Не найдено пробелов, вынужденно разбиваем по max_length
+                chunk = text[:max_length]
+                remaining = text[max_length:]
+            else:
+                # Разбиваем после пробела
+                chunk = text[:split_at + 1]
+                remaining = text[split_at + 1:]
+            chunks.append(chunk)
+            text = remaining
+        return chunks
+
     async def on_message(self, message: disnake.Message):
         if message.author.bot or not self.user in message.mentions:
             return
 
         async with message.channel.typing():
             response = await self.generate_response(message)
-        await message.reply(response[:2000])
+        
+        chunks = self.split_message(response)
+        for i, chunk in enumerate(chunks):
+            if i == 0:
+                await message.reply(chunk)
+            else:
+                await message.channel.send(chunk)
 
     async def generate_response(self, message: disnake.Message) -> str:
         user_id = str(message.author.id)
@@ -86,11 +111,11 @@ class GeneralCommands(cmds.Cog):
     async def info(self, inter: disnake.ApplicationCommandInteraction):
         embed = disnake.Embed(
             title="Привет, я Lingua!",
-            description="Lingua — это помощник, который помогает вам с различными задачами, предоставляя полезную информацию и выполняя команды. Он всегда готов ответить на ваши вопросы и сделать общение персонализированным и приятным.\n\n"
+            description="Lingua — это помощник, который помогает вам с различными задачами, предоставляя полезную информацию и выполняя команды. Он всегда готов ответить на ваши вопросы и сделать общение персонализированным и приятным.\n\n",
             color=0x0065bc
         )
         embed.set_thumbnail(url="https://raw.githubusercontent.com/atarwn/lingua/refs/heads/main/lingua.png")
-        embed.set_footer(text="Lingua v0.7.1 © Qwaderton Labs, 2024-2025")
+        embed.set_footer(text="Lingua v0.7.2 © Qwaderton, 2024-2025")
         await inter.response.send_message(embed=embed)
 
     @cmds.slash_command(name="reset", description="Сбросить историю диалога с ботом.")
@@ -103,7 +128,6 @@ class GeneralCommands(cmds.Cog):
         del self.bot.history[user_id]
         await inter.response.send_message("✅ История очищена!", ephemeral=True)
 
-
 if __name__ == "__main__":
     bot = Lingua()
 
@@ -114,4 +138,3 @@ if __name__ == "__main__":
         bot.run(BOT_TOKEN)
     except KeyboardInterrupt:
         print("⏹ Бот остановлен.")
-
