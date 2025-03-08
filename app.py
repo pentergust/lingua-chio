@@ -5,9 +5,9 @@ from os import getenv
 from openai import OpenAI
 
 load_dotenv()
-BOT_TOKEN = getenv("BOT")
-OAI_KEY   = getenv("OAI")
-API_URL   = getenv("API")
+BOT_TOKEN = getenv("BOT_TOKEN")
+OAI_KEY   = getenv("OPENAI_KEY")
+API_URL   = getenv("API_URL")
 
 MODEL = "sophosympatheia/rogue-rose-103b-v0.2:free"
 OWNER_ID = 805442059178737664  # Твой ID
