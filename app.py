@@ -1,3 +1,8 @@
+# Copyright (c) 2024-2025 Qwaderton
+# Maintainer: atarwn
+# Source: https://github.com/atarwn/Lingua
+# Licensed under the Qwaderton License. All rights reserved.
+
 import disnake
 from disnake.ext import commands as cmds
 from dotenv import load_dotenv
