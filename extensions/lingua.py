@@ -10,7 +10,7 @@ TODO: Сделать нормальное хранилище для настро
 Предоставляет
 -------------
 
-Version: v0.7.1 (1)
+Version: v0.7.2 (2)
 Author: Qwaderton
 Url: https://github.com/atarwn/Lingua
 """
@@ -54,12 +54,14 @@ class MessageStorage:
         self.client = OpenAI(base_url=API_URL, api_key=OAI_KEY)
         self.system_prompt = SYSTEM_PROMPT
 
-    def generate_answer(self, ctx: arc.Context, message: str) -> str:
+    async def generate_answer(self, ctx: arc.Context, message: str) -> str:
         """Генерирует некоторый ответ от AI."""
         user_id = str(ctx.user.id)
 
         if user_id not in self.history:
-            self.history[user_id] = [{"role": "system", "content": self.system_prompt}]
+            self.history[user_id] = [
+                {"role": "system", "content": self.system_prompt}
+            ]
 
         self.history[user_id].append({"role": "user", "content": message})
 
@@ -72,7 +74,9 @@ class MessageStorage:
             messages=self.history[user_id],
         )
         bot_reply = completion.choices[0].message.content
-        self.history[user_id].append({"role": "assistant", "content": bot_reply})
+        self.history[user_id].append(
+            {"role": "assistant", "content": bot_reply}
+        )
         return bot_reply
 
 
@@ -97,7 +101,7 @@ def get_info() -> hikari.Embed:
         color=0x0065BC,
     )
     embed.set_thumbnail(
-        url="https://raw.githubusercontent.com/atarwn/lingua/refs/heads/main/lingua.png"
+        "https://raw.githubusercontent.com/atarwn/lingua/refs/heads/main/lingua.png"
     )
     embed.set_footer(text="Lingua v0.7.1 © Qwaderton Labs, 2024-2025")
     return embed
@@ -111,20 +115,22 @@ def get_info() -> hikari.Embed:
 @arc.slash_command("lingua", description="Диалог с AI.")
 async def lingua_handler(
     ctx: arc.GatewayContext,
-    message: arc.Option[str | None, arc.StrParams("Сообщение для AI")],
+    message: arc.Option[str | None, arc.StrParams("Сообщение для AI")] = None,
 ) -> None:
     """Отправляет сообщение в диалог с ботом или же выводит информацию."""
     if message is None:
         await ctx.respond(embed=get_info())
-
-    async with ctx.get_channel().trigger_typing():
-        answer = await STORAGE.generate_answer(ctx, message)
-
-    await ctx.respond(answer[:2000])
+    else:
+        resp = await ctx.respond("⏳ Генерация ответа...")
+        async with ctx.get_channel().trigger_typing():
+            answer = await STORAGE.generate_answer(ctx, message)
+            await resp.edit(answer[:2000])
 
 
 @plugin.include
-@arc.slash_command("reset_dialog", description="Сбрасывает диалог с пользователем.")
+@arc.slash_command(
+    "reset_dialog", description="Сбрасывает диалог с пользователем."
+)
 async def reset_ai_dialog(
     ctx: arc.GatewayContext,
 ) -> None:
