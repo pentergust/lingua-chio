@@ -10,11 +10,15 @@ TODO: Сделать нормальное хранилище для настро
 Предоставляет
 -------------
 
-Version: v0.7.2 (2)
-Author: Qwaderton
-Url: https://github.com/atarwn/Lingua
+Copyright (c) 2024-2025 Qwaderton
+Licensed under the Qwaderton License. All rights reserved.
+
+Version: v0.8 (3)
+Maintainer: atarwn
+Source: https://github.com/atarwn/Lingua
 """
 
+from collections.abc import Iterator
 from os import getenv
 
 import arc
@@ -103,6 +107,29 @@ def get_info() -> hikari.Embed:
     return embed
 
 
+def iter_message(text: str, max_length: int = 2000) -> Iterator[str]:
+    """Разбивает больше сообщение на кусочки по 2000 символов."""
+    while len(text) > 0:
+        if len(text) <= max_length:
+            yield text
+            break
+
+        split_at = text.rfind(" ", 0, max_length)
+
+        # Не найдено пробелов, вынужденно разбиваем по max_length
+        if split_at == -1:
+            chunk = text[:max_length]
+            remaining = text[max_length:]
+
+        # Разбиваем после пробела
+        else:
+            chunk = text[: split_at + 1]
+            remaining = text[split_at + 1 :]
+
+        yield chunk
+        text = remaining
+
+
 # определение команд
 # ==================
 
@@ -120,7 +147,12 @@ async def lingua_handler(
         resp = await ctx.respond("⏳ Генерация ответа...")
         async with ctx.get_channel().trigger_typing():
             answer = await STORAGE.generate_answer(ctx, message)
-            await resp.edit(answer[:2000])
+            answer_gen = iter_message(answer)
+            await resp.edit(next(answer_gen))
+
+    # Отправляем все оставшиеся кусочки
+    for message_chunk in answer_gen:
+        await ctx.respond(message_chunk)
 
 
 @plugin.include
