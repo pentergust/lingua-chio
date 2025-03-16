@@ -1,8 +1,3 @@
-# Copyright (c) 2024-2025 Qwaderton
-# Maintainer: atarwn
-# Source: https://github.com/atarwn/Lingua
-# Licensed under the Qwaderton License. All rights reserved.
-
 import disnake
 from disnake.ext import commands as cmds
 from dotenv import load_dotenv
@@ -15,7 +10,7 @@ OAI_KEY   = getenv("OPENAI_KEY")
 API_URL   = getenv("API_URL")
 
 MODEL = "sophosympatheia/rogue-rose-103b-v0.2:free"
-OWNER_ID = 805442059178737664  # Твой ID
+OWNER_ID = 805442059178737664  
 
 SYSTEM_PROMPT = """Ты — Lingua, технический ассистент, созданный для помощи пользователям.
 Отвечай чётко, по делу, без воды. Если вопрос неясен, уточняй. 
@@ -29,7 +24,7 @@ class Lingua(cmds.Bot):
         super().__init__(
             intents=disnake.Intents.all(),
             command_prefix="lingua.",
-            help_command=None  # Убираем стандартную команду !help
+            help_command=None  
         )
         self.history = {}
         self.client = OpenAI(
@@ -41,7 +36,7 @@ class Lingua(cmds.Bot):
     async def on_ready(self):
         print(f"✅ {self.user} успешно запущен!")
         print(f"🔗 Подключён к {len(self.guilds)} серверам")
-        await self._sync_application_commands()  # Принудительная синхронизация слеш-команд
+        await self._sync_application_commands()  
 
     def split_message(self, text: str, max_length: int = 2000) -> list[str]:
         chunks = []
@@ -51,11 +46,11 @@ class Lingua(cmds.Bot):
                 break
             split_at = text.rfind(' ', 0, max_length)
             if split_at == -1:
-                # Не найдено пробелов, вынужденно разбиваем по max_length
+
                 chunk = text[:max_length]
                 remaining = text[max_length:]
             else:
-                # Разбиваем после пробела
+
                 chunk = text[:split_at + 1]
                 remaining = text[split_at + 1:]
             chunks.append(chunk)
@@ -68,7 +63,7 @@ class Lingua(cmds.Bot):
 
         async with message.channel.typing():
             response = await self.generate_response(message)
-        
+
         chunks = self.split_message(response)
         for i, chunk in enumerate(chunks):
             if i == 0:
@@ -95,7 +90,6 @@ class Lingua(cmds.Bot):
         self.history[user_id].append({"role": "assistant", "content": bot_reply})
         return bot_reply
 
-
 class GeneralCommands(cmds.Cog):
     def __init__(self, bot: Lingua):
         self.bot = bot
@@ -103,7 +97,7 @@ class GeneralCommands(cmds.Cog):
     @cmds.command(name="sync", description="Принудительная синхронизация команд.")
     async def sync(self, ctx: cmds.Context):
         if ctx.author.id != OWNER_ID:
-            return  # Игнорируем, если вызвал не владелец
+            return  
 
         await self.bot.sync_all_application_commands()
         await ctx.send("✅ Команды синхронизированы!")
@@ -129,14 +123,13 @@ class GeneralCommands(cmds.Cog):
         if user_id not in self.bot.history:
             await inter.response.send_message("⚠ У вас нет сохранённых сообщений.", ephemeral=True)
             return
-        
+
         del self.bot.history[user_id]
         await inter.response.send_message("✅ История очищена!", ephemeral=True)
 
 if __name__ == "__main__":
     bot = Lingua()
 
-    # Добавляем команды
     bot.add_cog(GeneralCommands(bot))
 
     try:
