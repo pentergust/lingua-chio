@@ -8,16 +8,9 @@ load_dotenv()
 BOT_TOKEN = getenv("BOT_TOKEN")
 OAI_KEY   = getenv("OPENAI_KEY")
 API_URL   = getenv("API_URL")
-
-MODEL = "sophosympatheia/rogue-rose-103b-v0.2:free"
-OWNER_ID = 805442059178737664  
-
-SYSTEM_PROMPT = """Ты — Lingua, технический ассистент, созданный для помощи пользователям.
-Отвечай чётко, по делу, без воды. Если вопрос неясен, уточняй. 
-Не давай ложных данных, не выдумывай. Если не знаешь — скажи об этом прямо.
-Говори сдержанно, но не холодно. Будь дружелюбным, но не переходи в панибратство.
-Когда отвечаешь про программирование, старайся давать примеры кода.
-Если разговор требует дополнительных уточнений — задавай вопросы пользователю."""
+MODEL     = getenv("MODEL")
+OWNER_ID  = getenv("OWNER_ID")
+SYSTEM_PROMPT = getenv("SYSTEM_PROMPT")
 
 class Lingua(cmds.Bot):
     def __init__(self):
