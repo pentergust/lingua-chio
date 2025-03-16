@@ -1,4 +1,4 @@
-<img src="lingua.png" alt="Логотип" align="right" width="200"/>
+<img src="assets/lingua.png" alt="Логотип" align="right" width="200"/>
 
 # Lingua — Твой Discord помощник
 
