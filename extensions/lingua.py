@@ -10,14 +10,12 @@ TODO: Сделать нормальное хранилище для настро
 Предоставляет
 -------------
 
-Copyright (c) 2024-2025 Qwaderton
-Licensed under the Qwaderton License. All rights reserved.
-
-Version: v0.8 (3)
+Version: v0.9 (4)
 Maintainer: atarwn
 Source: https://github.com/atarwn/Lingua
 """
 
+from collections import deque
 from collections.abc import Iterator
 from os import getenv
 
@@ -29,81 +27,83 @@ from openai import OpenAI
 # =====================
 
 plugin = arc.GatewayPlugin("lingua")
+MAX_HISTORY_LENGTH = 20
 
 # Настройки API
 OAI_KEY = getenv("OPENAI_KEY")
 API_URL = getenv("OPENAI_API_URL")
+OWNER_ID = getenv("OWNER_ID")
+MODEL = getenv("AI_MODEL", "meta-llama/llama-4-maverick:free")
 
-MODEL = "sophosympatheia/rogue-rose-103b-v0.2:free"
 # Кормим нейронке, чтобы выдавала хорошие ответы
-SYSTEM_PROMPT = (
-    "Ты — Lingua, технический ассистент, созданный для помощи пользователям."
-    "Отвечай чётко, по делу, без воды."
-    "Если вопрос неясен, уточняй."
-    "Не давай ложных данных, не выдумывай."
-    "Если не знаешь — скажи об этом прямо."
-    "Говори сдержанно, но не холодно."
-    "Будь дружелюбным, но не переходи в панибратство."
-    "Когда отвечаешь про программирование, старайся давать примеры кода."
-    "Если разговор требует дополнительных уточнений — "
-    "задавай вопросы пользователю."
-)
+SYSTEM_PROMPT = getenv("SYSTEM_PROMPT")
 
 
 class MessageStorage:
     """История сообщений с пользователем."""
 
-    def __init__(self) -> None:
-        self.history: dict[str, list[str]] = {}
+    def __init__(
+        self, model: str, system_prompt: str | None, history_length: int
+    ) -> None:
+        self.model = model
+        self.system_prompt = system_prompt
+        self.history_length = history_length
+
+        self.history: dict[int, deque[dict]] = {}
         self.client = OpenAI(base_url=API_URL, api_key=OAI_KEY)
-        self.system_prompt = SYSTEM_PROMPT
 
-    async def generate_answer(self, ctx: arc.Context, message: str) -> str:
-        """Генерирует некоторый ответ от AI."""
-        user_id = str(ctx.user.id)
+    async def get_completion(self, messages: deque[dict]) -> str:
+        """Делает запрос к AI модели."""
+        return (
+            self.client.chat.completions.create(
+                extra_headers={
+                    "HTTP-Referer": "https://lingua.qwa.su/",
+                    "X-Title": "Lingua AI",
+                },
+                model=self.model,
+                messages=messages,
+            )
+            .choices[0]
+            .message.content
+        )
 
+    async def add_to_history(self, user_id: int, message: str) -> None:
+        """Добавляет новое сообщение в историю."""
         if user_id not in self.history:
-            self.history[user_id] = [{"role": "system", "content": self.system_prompt}]
+            self.history[user_id] = deque(maxlen=self.history_length)
 
+            self.history[user_id].append(
+                {"role": "system", "content": self.system_prompt}
+            )
         self.history[user_id].append({"role": "user", "content": message})
 
-        completion = self.client.chat.completions.create(
-            extra_headers={
-                "HTTP-Referer": "https://lingua.qwa.su/",
-                "X-Title": "Lingua AI",
-            },
-            model=MODEL,
-            messages=self.history[user_id],
-        )
-        bot_reply = completion.choices[0].message.content
-        self.history[user_id].append({"role": "assistant", "content": bot_reply})
-        return bot_reply
+    async def generate_answer(self, user_id: int, message: str) -> str:
+        """Генерирует некоторый ответ от AI."""
+        await self.add_to_history(user_id, message)
+        completion = await self.get_completion(self.history[user_id])
+        self.history[user_id].append({"role": "assistant", "content": completion})
+        return completion
 
 
-STORAGE = MessageStorage()
+STORAGE = MessageStorage(
+    model=MODEL, system_prompt=SYSTEM_PROMPT, history_length=MAX_HISTORY_LENGTH
+)
 
 # Дополнительные функции
 # ======================
-
-_BOT_DESC = (
-    "Lingua — это помощник, который помогает вам с различными задачами, "
-    "предоставляя полезную информацию и выполняя команды. "
-    "Он всегда готов ответить на ваши вопросы и сделать общение "
-    "персонализированным и приятным.\n\n"
-)
 
 
 def get_info() -> hikari.Embed:
     """Немного информации о расширении."""
     embed = hikari.Embed(
         title="Привет, я Lingua!",
-        description=_BOT_DESC,
-        color=0x0065BC,
+        description="Lingua — Ваш многофункциональный помощник для решения  технических задач.",
+        color=0x00AAE5,
     )
     embed.set_thumbnail(
-        "https://raw.githubusercontent.com/atarwn/lingua/refs/heads/main/lingua.png"
+        "https://raw.githubusercontent.com/atarwn/Lingua/refs/heads/main/assets/lingua.png"
     )
-    embed.set_footer(text="Lingua v0.7.1 © Qwaderton Labs, 2024-2025")
+    embed.set_footer(text="Lingua v0.9 © Qwaderton Labs, 2024-2025")
     return embed
 
 
@@ -146,7 +146,7 @@ async def lingua_handler(
     else:
         resp = await ctx.respond("⏳ Генерация ответа...")
         async with ctx.get_channel().trigger_typing():
-            answer = await STORAGE.generate_answer(ctx, message)
+            answer = await STORAGE.generate_answer(ctx.user.id, message)
             answer_gen = iter_message(answer)
             await resp.edit(next(answer_gen))
 
